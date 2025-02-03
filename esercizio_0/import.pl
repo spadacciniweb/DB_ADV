@@ -32,14 +32,20 @@ my $dsn = sprintf("dbi:mysql:dbname=%s;host=%s;port=%s;",
 my $dbh = DBI->connect($dsn, $ENV{DB_USER}, $ENV{DB_PWD})
             or die "Connection error: $DBI::errstr";
 
+my $dt_start = DateTime->now;
+
 my %user = ();
 
 deletePrev()
     if $ENV{DELETE};
 
-read_bank_accounts();
-read_movements();
 
+import_bank_accounts();
+import_movements();
+        
+my $dt_end = DateTime->now;
+my_log( sprintf "END in %s seconds", ($dt_end - $dt_start)->seconds )
+    if $ENV{DEBUG};
 exit 0;
 
 sub my_log {
@@ -48,7 +54,7 @@ sub my_log {
 }
 
 sub deletePrev {
-    my @tables = qw/ bank_movement bank_account /;
+    my @tables = qw/ bank_movement bank_movement_trigger bank_account /;
     foreach my $table (@tables) {
         my $sql = sprintf "DELETE FROM %s", $table;
         $dbh->do( $sql );
@@ -57,12 +63,14 @@ sub deletePrev {
     }
 }
 
-sub read_bank_accounts {
+sub import_bank_accounts {
     my $csv = Text::CSV->new({
       binary    => 1,
       auto_diag => 1,
       sep_char  => ','
     });
+
+    my_log("import bank accounts...");
 
     my $line = 0;
     open(my $data, '<:encoding(utf8)', $ENV{BANK_ACCOUNTS})
@@ -102,12 +110,14 @@ sub read_bank_accounts {
     close $data;
 }
 
-sub read_movements {
+sub import_movements {
     my $csv = Text::CSV->new({
       binary    => 1,
       auto_diag => 1,
       sep_char  => ','
     });
+
+    my_log("import bank movements...");
 
     my $line = 0;
     open(my $data, '<:encoding(utf8)', $ENV{BANK_MOVEMENTS})

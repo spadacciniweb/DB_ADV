@@ -24,7 +24,7 @@ use DateTime;
 use DBI;
 use ENV::Util;
 
-ENV::Util::load_dotenv($ENV{HOME}.'/.env/db_adv_25_esercizio_0');
+ENV::Util::load_dotenv($ENV{HOME}.'/.env/bd_and_ml_25_esercizio_1');
 
 my $dsn = sprintf("dbi:mysql:dbname=%s;host=%s;port=%s;",
                     $ENV{DB_NAME}, $ENV{DB_HOST}, $ENV{DB_PORT}
@@ -32,25 +32,24 @@ my $dsn = sprintf("dbi:mysql:dbname=%s;host=%s;port=%s;",
 my $dbh = DBI->connect($dsn, $ENV{DB_USER}, $ENV{DB_PWD})
             or die "Connection error: $DBI::errstr";
 
-my $dt_start = DateTime->now;
+my $dt_start = time();
 
 my %user = ();
 
 deletePrev()
     if $ENV{DELETE};
 
-
 import_bank_accounts();
 import_movements();
         
-my $dt_end = DateTime->now;
-my_log( sprintf "END in %s seconds", ($dt_end - $dt_start)->seconds )
+my $delta_t = time() - $dt_start;
+my_log( sprintf "END in %d minutes %d seconds", $delta_t / 60, $delta_t % 60 )
     if $ENV{DEBUG};
 exit 0;
 
 sub my_log {
     $_ = shift;
-    printf "[%s] %s\n", DateTime->now, $_ || '-> missing <-';
+    printf "[%s] %s\n", DateTime->now->datetime(' '), $_ || '-> missing <-';
 }
 
 sub deletePrev {
